@@ -32,14 +32,12 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             padding: 12px 14px;
-            /* Extra clearance at bottom for the timer + iPhone home indicator */
             padding-bottom: calc(95px + env(safe-area-inset-bottom, 16px));
             max-width: 650px;
             margin: 0 auto;
             overflow-x: hidden;
         }
 
-        /* Header */
         header {
             text-align: center;
             padding: 6px 0 12px 0;
@@ -72,7 +70,6 @@
             margin-top: 8px;
         }
 
-        /* Day Navigation (Horizontal Mobile Scroller) */
         .tabs-wrapper {
             position: sticky;
             top: 0;
@@ -132,7 +129,6 @@
             color: #000;
         }
 
-        /* Day Info Card */
         .day-info {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -187,7 +183,6 @@
             text-decoration: underline;
         }
 
-        /* Workout Cards */
         .workout-list {
             display: flex;
             flex-direction: column;
@@ -203,21 +198,23 @@
             flex-direction: column;
         }
 
+        /* FIXED: Uncropped GIF Display */
         .exercise-media {
             width: 100%;
-            height: 170px;
-            background: #000;
-            position: relative;
+            height: 220px;
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid var(--border-color);
+            padding: 8px;
         }
 
         .exercise-media img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
         }
 
         .exercise-content {
@@ -256,7 +253,6 @@
             line-height: 1.35;
         }
 
-        /* Mobile Set Tracker Buttons */
         .set-tracker {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -288,7 +284,6 @@
             border-color: var(--accent-green);
         }
 
-        /* Fixed Mobile Rest Timer */
         .rest-timer-bar {
             position: fixed;
             bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -350,7 +345,6 @@
         <span class="walk-badge">🚶 Walk To & Fro: 3.4 KM (Daily Foundation)</span>
     </header>
 
-    <!-- Scrollable Tab Bar -->
     <div class="tabs-wrapper">
         <div class="tabs-container" id="tabs">
             <button class="tab-btn active" onclick="selectTab('mon', this)">Mon: Upper A</button>
@@ -364,13 +358,9 @@
         </div>
     </div>
 
-    <!-- Active Day Information -->
     <div class="day-info" id="day-info"></div>
-
-    <!-- Exercise Cards -->
     <div class="workout-list" id="workout-list"></div>
 
-    <!-- Floating Timer -->
     <div class="rest-timer-bar">
         <span class="timer-text" id="timer-display">Rest: Ready</span>
         <div class="timer-btns">
@@ -753,16 +743,13 @@
         function selectTab(dayKey, element) {
             currentDayKey = dayKey;
             
-            // Highlight button
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
 
-            // Auto-center tab horizontally on mobile
             element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 
             const current = workoutData[dayKey];
             
-            // Header Info
             document.getElementById('day-info').innerHTML = `
                 <h2>${current.title}</h2>
                 <p>${current.desc}</p>
@@ -775,7 +762,6 @@
                 </div>
             `;
 
-            // Exercises
             const listContainer = document.getElementById('workout-list');
             listContainer.innerHTML = '';
 
@@ -811,7 +797,7 @@
             if (isDone) {
                 btn.innerText = btn.innerText.replace('✓', '').trim() + ' ✓';
                 localStorage.setItem(storageKey, 'true');
-                startTimer(90); // starts rest timer automatically
+                startTimer(90);
             } else {
                 btn.innerText = btn.innerText.replace('✓', '').trim();
                 localStorage.removeItem(storageKey);
@@ -830,7 +816,6 @@
             }
         }
 
-        // Timer Logic
         let timerInterval;
         function startTimer(seconds) {
             clearInterval(timerInterval);
@@ -856,7 +841,6 @@
             document.getElementById('timer-display').innerText = 'Rest: Ready';
         }
 
-        // Initialize to Monday on load
         window.onload = () => {
             selectTab('mon', document.querySelector('.tab-btn'));
         };
