@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Fit4Less Routine</title>
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --card-bg: #141a23;
+            --border-color: #273142;
+            --text-main: #f3f4f6;
+            --text-sub: #9ca3af;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+            --accent-blue: #38bdf8;
+            --card-radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 12px 14px;
+            /* Extra clearance at bottom for the timer + iPhone home indicator */
+            padding-bottom: calc(95px + env(safe-area-inset-bottom, 16px));
+            max-width: 650px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 6px 0 12px 0;
+        }
+
+        header h1 {
+            font-size: 1.35rem;
+            color: var(--accent-yellow);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            margin-top: 3px;
+        }
+
+        .walk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        /* Day Navigation (Horizontal Mobile Scroller) */
+        .tabs-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            background: var(--bg-color);
+            padding-bottom: 8px;
+            margin: 0 -14px 10px -14px;
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .tabs-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            padding: 4px 2px 8px 2px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            touch-action: manipulation;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s ease-out;
+            flex-shrink: 0;
+        }
+
+        .tab-btn:active {
+            transform: scale(0.96);
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-yellow);
+            color: #000;
+            border-color: var(--accent-yellow);
+        }
+
+        .tab-btn.special-tab {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .tab-btn.special-tab.active {
+            background-color: var(--accent-blue);
+            color: #000;
+        }
+
+        /* Day Info Card */
+        .day-info {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .day-info h2 {
+            font-size: 1.05rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .day-info p {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-top: 3px;
+            line-height: 1.35;
+        }
+
+        .routine-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .meta-tags-left {
+            display: flex;
+            gap: 6px;
+        }
+
+        .meta-pill {
+            background: #1c2430;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+
+        .reset-day-btn {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Workout Cards */
+        .workout-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exercise-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .exercise-media {
+            width: 100%;
+            height: 170px;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .exercise-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .exercise-content {
+            padding: 12px 14px;
+        }
+
+        .exercise-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+
+        .machine-tag {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--accent-yellow);
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .exercise-meta {
+            margin-top: 7px;
+            font-size: 0.82rem;
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .exercise-cue {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+
+        /* Mobile Set Tracker Buttons */
+        .set-tracker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .set-btn {
+            touch-action: manipulation;
+            background: #1c2430;
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 10px 0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.12s ease;
+        }
+
+        .set-btn:active {
+            transform: scale(0.94);
+        }
+
+        .set-btn.done {
+            background: var(--accent-green);
+            color: #000;
+            border-color: var(--accent-green);
+        }
+
+        /* Fixed Mobile Rest Timer */
+        .rest-timer-bar {
+            position: fixed;
+            bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #18202c;
+            border: 1.5px solid var(--accent-yellow);
+            padding: 8px 14px;
+            border-radius: 36px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            z-index: 1000;
+            width: calc(100% - 28px);
+            max-width: 440px;
+            justify-content: space-between;
+        }
+
+        .timer-text {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--accent-yellow);
+            white-space: nowrap;
+        }
+
+        .timer-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .timer-btn {
+            touch-action: manipulation;
+            background: #273142;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 8px 11px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .timer-btn:active {
+            transform: scale(0.92);
+        }
+
+        .timer-btn.reset {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>FIT4LESS DAILY WORKOUT</h1>
+        <p>Machine Routine & Evening Posture Protocol</p>
+        <span class="walk-badge">🚶 Walk To & Fro: 3.4 KM (Daily Foundation)</span>
+    </header>
+
+    <!-- Scrollable Tab Bar -->
+    <div class="tabs-wrapper">
+        <div class="tabs-container" id="tabs">
+            <button class="tab-btn active" onclick="selectTab('mon', this)">Mon: Upper A</button>
+            <button class="tab-btn" onclick="selectTab('tue', this)">Tue: Lower A</button>
+            <button class="tab-btn" onclick="selectTab('wed', this)">Wed: Cardio/Abs</button>
+            <button class="tab-btn" onclick="selectTab('thu', this)">Thu: Upper B</button>
+            <button class="tab-btn" onclick="selectTab('fri', this)">Fri: Lower B</button>
+            <button class="tab-btn" onclick="selectTab('sat', this)">Sat: Circuit</button>
+            <button class="tab-btn" onclick="selectTab('sun', this)">Sun: Rest</button>
+            <button class="tab-btn special-tab" onclick="selectTab('eve', this)">🌙 Evening (Home)</button>
+        </div>
+    </div>
+
+    <!-- Active Day Information -->
+    <div class="day-info" id="day-info"></div>
+
+    <!-- Exercise Cards -->
+    <div class="workout-list" id="workout-list"></div>
+
+    <!-- Floating Timer -->
+    <div class="rest-timer-bar">
+        <span class="timer-text" id="timer-display">Rest: Ready</span>
+        <div class="timer-btns">
+            <button class="timer-btn" onclick="startTimer(60)">60s</button>
+            <button class="timer-btn" onclick="startTimer(90)">90s</button>
+            <button class="timer-btn reset" onclick="resetTimer()">✕</button>
+        </div>
+    </div>
+
+    <script>
+        const workoutData = {
+            mon: {
+                title: "Monday: Upper Body Push & Pull",
+                desc: "Walk is your warm-up! Focus on machine stability with zero spinal strain.",
+                time: "45-50 Min",
+                exercises: [
+                    {
+                        name: "Seated Chest Press Machine",
+                        equipment: "Fit4Less Pin-Loaded Chest Press",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Adjust seat so handles align with mid-chest. Press without locking elbows violently.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Chest-Press-Machine.gif"
+                    },
+                    {
+                        name: "Wide-Grip Lat Pulldown",
+                        equipment: "Cable Lat Pulldown Station",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Lean back slightly (10°). Pull bar down to collarbone, driving elbows down.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lat-Pulldown.gif"
+                    },
+                    {
+                        name: "Seated Cable Row",
+                        equipment: "Low Cable Row (V-Grip Handle)",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Sit tall, pull into belly button, hold 1s at your torso to squeeze back.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Cable-Row.gif"
+                    },
+                    {
+                        name: "Machine Shoulder Press",
+                        equipment: "Pin-Loaded Overhead Press",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Keep elbows slightly forward (not flared out wide) to protect rotator cuff.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Shoulder-Press.gif"
+                    },
+                    {
+                        name: "Cable Face Pulls",
+                        equipment: "Cable Column with Rope (Eye Level)",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Pull rope directly to eyes while pulling ends apart. Reverses computer slouch.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Face-Pull.gif"
+                    },
+                    {
+                        name: "Cable Tricep Pushdown",
+                        equipment: "Cable Column with Rope",
+                        sets: "3 Sets × 12-15 Reps",
+                        cue: "Keep upper arms glued to ribs. Spread rope at bottom.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Rope-Pushdown.gif"
+                    },
+                    {
+                        name: "Machine Preacher Bicep Curl",
+                        equipment: "Pin-Loaded Bicep Machine",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Rest armpits on pad. Curl upward without swinging torso.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Preacher-Curl.gif"
+                    }
+                ]
+            },
+            tue: {
+                title: "Tuesday: Lower Body & Knee Health",
+                desc: "High machine stability protects joints while working massive leg muscles.",
+                time: "45-50 Min",
+                exercises: [
+                    {
+                        name: "Seated Leg Press Machine",
+                        equipment: "Fit4Less Incline or Horizontal Sled",
+                        sets: "4 Sets × 10-12 Reps",
+                        cue: "Feet shoulder-width apart. Never lock knees at the top.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Press.gif"
+                    },
+                    {
+                        name: "Seated Hamstring Leg Curl",
+                        equipment: "Pin-Loaded Seated Leg Curl",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Pull heels under seat; control weight back slowly (3 seconds).",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Leg-Curl.gif"
+                    },
+                    {
+                        name: "Leg Extension Machine",
+                        equipment: "Pin-Loaded Leg Extension",
+                        sets: "3 Sets × 12-15 Reps",
+                        cue: "Squeeze quads for 1s at top. Do not kick up violently.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/LEG-EXTENSION.gif"
+                    },
+                    {
+                        name: "Seated Hip Abductor (Outer Thigh)",
+                        equipment: "Pin-Loaded Abductor Machine",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Press knees outwards against pads. Crucial for hip and knee alignment.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/lever-seated-hip-abduction.gif"
+                    },
+                    {
+                        name: "Seated Hip Adductor (Inner Thigh)",
+                        equipment: "Pin-Loaded Adductor Machine",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Squeeze knees inward together smoothly. Strengthens the inner groin.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Seated-Hip-Adduction.gif"
+                    },
+                    {
+                        name: "Standing Calf Press on Leg Press",
+                        equipment: "Leg Press Footplate Edge",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Balls of feet on edge. Push through big toes, pause at stretch.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Calf-Press-on-Leg-Press.gif"
+                    },
+                    {
+                        name: "Pin-Loaded Ab Crunch Machine",
+                        equipment: "Ab Crunch Machine",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Pull ribs down toward hips. Exhale fully as you curl forward.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Crunch-Machine.gif"
+                    }
+                ]
+            },
+            wed: {
+                title: "Wednesday: Cardio Flush & Abs",
+                desc: "Active recovery. Burns calories and opens tight hips without beating up muscles.",
+                time: "40 Min",
+                exercises: [
+                    {
+                        name: "Incline Treadmill Striding",
+                        equipment: "Fit4Less Treadmill",
+                        sets: "20 Minutes Steady",
+                        cue: "Incline 4-6%, speed 4.2-4.8 km/h. Breathe through your nose.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/treadmill.gif"
+                    },
+                    {
+                        name: "Recumbent Stationary Bike",
+                        equipment: "Fit4Less Recumbent Bike (Bucket Seat)",
+                        sets: "15 Minutes Steady",
+                        cue: "Bucket seat supports lower back. Maintain 75-80 RPM at moderate resistance.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Recumbent-Bike.gif"
+                    },
+                    {
+                        name: "Captain's Chair Knee Raises",
+                        equipment: "Dip / Knee Raise Tower",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Forearms supported, pull knees up without swinging your torso.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Vertical-Leg-Raise.gif"
+                    },
+                    {
+                        name: "Torso Rotation Machine",
+                        equipment: "Rotary Torso Pin-Loaded",
+                        sets: "3 Sets × 12 Reps per side",
+                        cue: "Rotate hips and torso smoothly. Control the return slowly.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Twist.gif"
+                    },
+                    {
+                        name: "45° Back Extension Bench",
+                        equipment: "Hyperextension Bench",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Hinge at hips, rise until body is straight. Squeeze glutes.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Back-Extension.gif"
+                    }
+                ]
+            },
+            thu: {
+                title: "Thursday: Upper Hypertrophy & Arms",
+                desc: "Cable and pin work that spares your joints while toning your upper body.",
+                time: "45 Min",
+                exercises: [
+                    {
+                        name: "Incline Chest Press Machine",
+                        equipment: "Pin-Loaded Incline Press",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Targets upper chest. Keep shoulder blades pinched against seat pad.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Incline-Chest-Press.gif"
+                    },
+                    {
+                        name: "Machine Pec Fly",
+                        equipment: "Pec Deck Machine",
+                        sets: "3 Sets × 12-15 Reps",
+                        cue: "Slight bend in elbows. Squeeze inner chest at the center.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pec-Deck-Fly.gif"
+                    },
+                    {
+                        name: "Reverse Pec Deck (Rear Deltoid)",
+                        equipment: "Pec Deck Machine (Facing In)",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Counteracts programmer slump by building the rear shoulder.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Rear-Delt-Machine-Flys.gif"
+                    },
+                    {
+                        name: "Neutral-Grip Lat Pulldown",
+                        equipment: "Lat Pulldown (V-Bar handle)",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Neutral grip is easy on shoulders. Pull down to upper chest.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/V-bar-Lat-Pulldown.gif"
+                    },
+                    {
+                        name: "Cable Overhead Tricep Extension",
+                        equipment: "Cable Column with Rope",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Face away from cable. Extend elbows forward overhead.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Cable-Overhead-Triceps-Extension.gif"
+                    },
+                    {
+                        name: "Standing Cable Bicep Curls",
+                        equipment: "Cable Tower (Straight/EZ Bar)",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Keep elbows fixed at ribs. Curl without rocking torso.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Cable-Curl.gif"
+                    },
+                    {
+                        name: "Dumbbell Hammer Curls",
+                        equipment: "Dumbbells",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Palms face each other throughout. Builds forearm grip.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Hammer-Curl.gif"
+                    }
+                ]
+            },
+            fri: {
+                title: "Friday: Lower Body & Posterior Chain",
+                desc: "Hamstrings, glutes, and core are key to burning fat and supporting posture.",
+                time: "45-50 Min",
+                exercises: [
+                    {
+                        name: "Smith Machine Box Squats",
+                        equipment: "Smith Machine + Bench behind you",
+                        sets: "3 Sets × 10 Reps",
+                        cue: "Sit back onto bench safely, pause 0.5s, drive up through heels.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Smith-Machine-Squat.gif"
+                    },
+                    {
+                        name: "Dumbbell Romanian Deadlift (RDL)",
+                        equipment: "Pair of Moderate Dumbbells",
+                        sets: "3 Sets × 10-12 Reps",
+                        cue: "Slight knee bend. Push hips back as if touching a wall with glutes.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Romanian-Deadlift.gif"
+                    },
+                    {
+                        name: "Lying or Seated Hamstring Curl",
+                        equipment: "Pin-Loaded Leg Curl",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Point toes forward, curl smoothly, resist weight on way down.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lying-Leg-Curl.gif"
+                    },
+                    {
+                        name: "High & Wide Stance Leg Press",
+                        equipment: "Leg Press Machine",
+                        sets: "3 Sets × 12 Reps",
+                        cue: "Feet high and wide on plate. Targets glutes/hamstrings directly.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Press.gif"
+                    },
+                    {
+                        name: "Dumbbell Farmer's Carry",
+                        equipment: "2 Moderate Dumbbells",
+                        sets: "3 Sets × 45 Seconds Walk",
+                        cue: "Hold dumbbells at sides, stand tall, walk slowly with braced abs.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Farmers-Walk.gif"
+                    },
+                    {
+                        name: "Cable Standing Woodchopper",
+                        equipment: "Cable Column with D-Handle",
+                        sets: "3 Sets × 12 Reps per side",
+                        cue: "Start high, chop diagonally down across body using core rotation.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Woodchopper.gif"
+                    }
+                ]
+            },
+            sat: {
+                title: "Saturday: Express Machine Circuit",
+                desc: "Fast 30-min machine circuit. Keep rests to 60s to keep your heart rate up.",
+                time: "30-35 Min",
+                exercises: [
+                    {
+                        name: "Chest Press + Seated Row Superset",
+                        equipment: "Chest Press & Row Machines",
+                        sets: "3 Sets × 12 Reps each",
+                        cue: "Do 12 Chest Presses, then immediately 12 Rows. Rest 60 seconds.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Chest-Press-Machine.gif"
+                    },
+                    {
+                        name: "Leg Extension + Leg Curl Superset",
+                        equipment: "Leg Extension & Curl Machines",
+                        sets: "3 Sets × 12 Reps each",
+                        cue: "Complete 12 extensions then 12 curls back-to-back.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/LEG-EXTENSION.gif"
+                    },
+                    {
+                        name: "Cable Rope Pushdown & Curls",
+                        equipment: "Cable Column with Rope",
+                        sets: "3 Sets × 12 Reps each",
+                        cue: "Tricep pushdowns directly into bicep hammer curls.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Rope-Pushdown.gif"
+                    },
+                    {
+                        name: "Elliptical Cooldown",
+                        equipment: "Fit4Less Elliptical Machine",
+                        sets: "15 Minutes Steady",
+                        cue: "Moderate resistance (level 5-6), flush out muscle fatigue.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Elliptical-Trainer.gif"
+                    }
+                ]
+            },
+            sun: {
+                title: "Sunday: Full Rest & Active Recovery",
+                desc: "No lifting today. Let tendons, joints, and nervous system recharge.",
+                time: "30-40 Min",
+                exercises: [
+                    {
+                        name: "Outdoor Leisure Walk",
+                        equipment: "Outdoor Flat Path",
+                        sets: "30-40 Minutes Casual Pace",
+                        cue: "Walk at an easy conversation pace. Stay hydrated.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/walking.gif"
+                    },
+                    {
+                        name: "Standing Quad & Hamstring Stretch",
+                        equipment: "Bodyweight",
+                        sets: "3 Rounds × 30s per stretch",
+                        cue: "Gently stretch thighs and calves after your walk.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/05/Standing-Quad-Stretch.gif"
+                    }
+                ]
+            },
+            eve: {
+                title: "🌙 Evening: Post-Software Work Reset",
+                desc: "15 minutes in your living room to decompress your spine and reverse desk hunching.",
+                time: "15 Min (Zero Equipment)",
+                exercises: [
+                    {
+                        name: "Incline Desk / Wall Pushups",
+                        equipment: "Sturdy Desk or Wall",
+                        sets: "3 Sets × 12-15 Reps",
+                        cue: "Plank position against desk edge. Lower chest and press up smoothly.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Push-Up.gif"
+                    },
+                    {
+                        name: "Chair / Box Squats",
+                        equipment: "Living Room Chair or Sofa",
+                        sets: "3 Sets × 12-15 Reps",
+                        cue: "Sit down softly, then drive through heels to stand. Wakes up glutes.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/05/squat.gif"
+                    },
+                    {
+                        name: "Floor Glute Bridges",
+                        equipment: "Floor or Carpet",
+                        sets: "3 Sets × 15 Reps",
+                        cue: "Lie on back, lift hips and squeeze glutes at the top for 2 seconds.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Glute-Bridge.gif"
+                    },
+                    {
+                        name: "Dead Bugs (Core Activation)",
+                        equipment: "Floor or Carpet",
+                        sets: "3 Sets × 8 Reps per side",
+                        cue: "Keep lower back flat against floor while moving opposite limbs.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/05/Dead-Bug.gif"
+                    },
+                    {
+                        name: "Bird-Dog (Lumbar Spine Health)",
+                        equipment: "Floor or Mat",
+                        sets: "3 Sets × 8 Reps per side",
+                        cue: "Extend opposite arm and leg straight out without arching spine.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/04/Bird-Dog.gif"
+                    },
+                    {
+                        name: "Doorway Chest Stretch & Cat-Cow",
+                        equipment: "Doorway Frame & Floor",
+                        sets: "2-3 Minutes Total",
+                        cue: "Forearms against doorway frame to stretch pec muscles, then do cat-cows.",
+                        img: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Cat-Cow-Pose.gif"
+                    }
+                ]
+            }
+        };
+
+        let currentDayKey = 'mon';
+
+        function selectTab(dayKey, element) {
+            currentDayKey = dayKey;
+            
+            // Highlight button
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            // Auto-center tab horizontally on mobile
+            element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+            const current = workoutData[dayKey];
+            
+            // Header Info
+            document.getElementById('day-info').innerHTML = `
+                <h2>${current.title}</h2>
+                <p>${current.desc}</p>
+                <div class="routine-meta-bar">
+                    <div class="meta-tags-left">
+                        <span class="meta-pill">📋 ${current.exercises.length} Exercises</span>
+                        <span class="meta-pill">⏱️ ${current.time}</span>
+                    </div>
+                    <button class="reset-day-btn" onclick="clearDayChecks('${dayKey}')">Reset Checks</button>
+                </div>
+            `;
+
+            // Exercises
+            const listContainer = document.getElementById('workout-list');
+            listContainer.innerHTML = '';
+
+            current.exercises.forEach((ex, exIdx) => {
+                const card = document.createElement('div');
+                card.className = 'exercise-card';
+                card.innerHTML = `
+                    <div class="exercise-media">
+                        <img src="${ex.img}" alt="${ex.name}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&auto=format&fit=crop&q=60';">
+                    </div>
+                    <div class="exercise-content">
+                        <div class="exercise-title">${ex.name}</div>
+                        <span class="machine-tag">📍 ${ex.equipment}</span>
+                        <div class="exercise-meta">${ex.sets}</div>
+                        <p class="exercise-cue">💡 <b>Form:</b> ${ex.cue}</p>
+                        <div class="set-tracker">
+                            ${[1, 2, 3, 4].map(num => {
+                                const key = `fit_${dayKey}_${exIdx}_${num}`;
+                                const isDone = localStorage.getItem(key) === 'true';
+                                return `<button class="set-btn ${isDone ? 'done' : ''}" onclick="toggleSet(this, '${key}')">Set ${num} ${isDone ? '✓' : ''}</button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        function toggleSet(btn, storageKey) {
+            btn.classList.toggle('done');
+            const isDone = btn.classList.contains('done');
+            
+            if (isDone) {
+                btn.innerText = btn.innerText.replace('✓', '').trim() + ' ✓';
+                localStorage.setItem(storageKey, 'true');
+                startTimer(90); // starts rest timer automatically
+            } else {
+                btn.innerText = btn.innerText.replace('✓', '').trim();
+                localStorage.removeItem(storageKey);
+            }
+        }
+
+        function clearDayChecks(dayKey) {
+            if (confirm("Reset completed sets for this day?")) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(`fit_${dayKey}_`)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                const activeBtn = document.querySelector(`.tab-btn.active`);
+                selectTab(dayKey, activeBtn);
+            }
+        }
+
+        // Timer Logic
+        let timerInterval;
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            let timeRemaining = seconds;
+            const display = document.getElementById('timer-display');
+
+            timerInterval = setInterval(() => {
+                const mins = Math.floor(timeRemaining / 60);
+                const secs = timeRemaining % 60;
+                display.innerText = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    display.innerText = "Rest Over! 🔥";
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }
+                timeRemaining--;
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').innerText = 'Rest: Ready';
+        }
+
+        // Initialize to Monday on load
+        window.onload = () => {
+            selectTab('mon', document.querySelector('.tab-btn'));
+        };
+    </script>
+</body>
+</html>
